@@ -1,6 +1,6 @@
-# Text-to-SVG Parser Project
+# Text-to-Python Parser Project
 
-This project is a simple **Text-to-Code** system written in C++ that uses a mini domain-specific language (DSL) to convert plain text drawing commands into valid SVG markup. It parses input like `"DRAW RECTANGLE..."` and generates shape definitions that can be rendered directly in any modern web browser.
+This project is a **Text-to-Text** system written in C++ that parses a simplified C++ class declaration and converts it into an equivalent Python class. It satisfies the requirements of a domain-specific language (DSL) by defining a clear input grammar, implementing a parser, and generating structured output in a different programming language.
 
 ---
 
