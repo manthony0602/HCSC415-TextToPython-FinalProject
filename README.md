@@ -83,6 +83,7 @@ class Person:
 
 ## **Grammar Definiton (BNF)**
 
+```
 <program> ::= <class_decl>
 <class_decl> ::= "class" <identifier> "{" <public_block> "};"
 <public_block> ::= "public:" <member_list>
@@ -93,6 +94,7 @@ class Person:
 <type> ::= "int" | "float" | "string" | "double" | "bool"
 <identifier> ::= <letter> <identifier_rest>
 <identifier_rest> ::= "" | <letter_or_digit> <identifier_rest>
+```
 
 ---
 
