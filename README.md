@@ -96,6 +96,20 @@ class Person:
 
 ---
 
+## How the Grammar Maps to the Parser
+
+Each BNF rule corresponds to a logic section in the C++ parser:
+
+- `<class_decl>` → Recognized by looking for "class" and capturing the name
+- `<public_block>` → Detected with the "public:" keyword
+- `<attribute_decl>` → Parsed by matching types like `int`, `string`, etc., followed by an identifier
+- `<method_decl>` → Detected using the "void" keyword and structured around `void name();`
+- The tokenizer ensures `(`, `)`, and `;` are properly separated to match grammar expectations
+
+These patterns are handled in the `parseClass()` function using a top-down, recursive style.
+
+---
+
 ---
 
 ## **Installation & Setup**
