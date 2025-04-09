@@ -34,50 +34,44 @@ std::vector<Token> tokenize(const std::string& input) {
         else {
             flushBuffer();
 
-            std::string sym(1, ch);
-            if (ch == ';') {
-                tokens.push_back({"SEMICOLON", ";"});
-            } else if (ch == '{') {
-                tokens.push_back({"LBRACE", "{"});
-            } else if (ch == '}') {
-                tokens.push_back({"RBRACE", "}"});
-            } else if (ch == '(') {
-                tokens.push_back({"LPAREN", "("});
-            } else if (ch == ')') {
-                tokens.push_back({"RPAREN", ")"});
-            }
+            if (ch == ';') tokens.push_back({"SEMICOLON", ";"});
+            else if (ch == '{') tokens.push_back({"LBRACE", "{"});
+            else if (ch == '}') tokens.push_back({"RBRACE", "}"});
+            else if (ch == '(') tokens.push_back({"LPAREN", "("});
+            else if (ch == ')') tokens.push_back({"RPAREN", ")"});
         }
     }
-    flushBuffer(); // flush any remaining characters
+    flushBuffer();
 
-    // Fix token types (now that everything is split cleanly)
+    // Assign token types based on value
     for (auto& token : tokens) {
         if (token.value == "class") token.type = "CLASS";
         else if (token.value == "public:") token.type = "PUBLIC";
         else if (token.value == "void") token.type = "VOID";
-        else if (token.value == "int" || token.value == "float" || token.value == "string" || token.value == "bool" || token.value == "double")
+        else if (token.value == "int" || token.value == "float" || token.value == "string" ||
+                 token.value == "double" || token.value == "bool") {
             token.type = "TYPE";
+        }
     }
 
     return tokens;
 }
 
-
-// Data structure
+// Class Info Struct
 struct ClassInfo {
     std::string name;
     std::vector<std::pair<std::string, std::string>> attributes;
     std::vector<std::string> methods;
 };
 
-// Parser
+// Class Parser
 ClassInfo parseClass(const std::vector<Token>& tokens) {
     ClassInfo info;
     int i = 0;
 
     if (tokens[i].type == "CLASS") {
         info.name = tokens[i + 1].value;
-        i += 3; // skip "class", name, and "{"
+        i += 3; // skip "class", name, "{"
     }
 
     if (tokens[i].type == "PUBLIC") {
@@ -89,12 +83,14 @@ ClassInfo parseClass(const std::vector<Token>& tokens) {
             std::string type = tokens[i].value;
             std::string name = tokens[i + 1].value;
             info.attributes.push_back({type, name});
-            i += 3; // skip type, name, semicolon
-        } else if (tokens[i].type == "VOID") {
+            i += 3; // type, name, ;
+        }
+        else if (tokens[i].type == "VOID") {
             std::string methodName = tokens[i + 1].value;
-            info.methods.push_back(methodName); // DO NOT add "()" here
-            i += 5; // skip void, name, (, ), ;
-        } else {
+            info.methods.push_back(methodName);
+            i += 5; // void, name, (, ), ;
+        }
+        else {
             i++;
         }
     }
@@ -102,20 +98,20 @@ ClassInfo parseClass(const std::vector<Token>& tokens) {
     return info;
 }
 
-// Python Code Generator
+// Python Generator
 std::string generatePython(const ClassInfo& info) {
     std::ostringstream py;
 
     py << "class " << info.name << ":\n";
     py << "    def __init__(self):\n";
+    if (info.attributes.empty()) {
+        py << "        pass\n";
+    }
     for (const auto& [type, name] : info.attributes) {
         py << "        self." << name << " = ";
         if (type == "int" || type == "float" || type == "double") py << "0\n";
         else if (type == "bool") py << "False\n";
         else py << "\"\"\n";
-    }
-    if (info.attributes.empty()) {
-        py << "        pass\n";
     }
 
     py << "\n";
@@ -127,7 +123,7 @@ std::string generatePython(const ClassInfo& info) {
     return py.str();
 }
 
-// Main
+// Main 
 int main() {
     std::ifstream inputFile("input.txt");
     std::ofstream outputFile("output.py");
@@ -144,9 +140,24 @@ int main() {
 
     auto tokens = tokenize(all);
     auto classInfo = parseClass(tokens);
-    std::string pythonCode = generatePython(classInfo);
 
+    // Print Readable Parse Tree
+    std::cout << "[Class]\n";
+    std::cout << "  Name: " << classInfo.name << "\n";
+
+    std::cout << "  Attributes:\n";
+    for (const auto& [type, name] : classInfo.attributes) {
+        std::cout << "    - " << type << " " << name << "\n";
+    }
+
+    std::cout << "  Methods:\n";
+    for (const auto& method : classInfo.methods) {
+        std::cout << "    - " << method << "\n";
+    }
+
+    std::string pythonCode = generatePython(classInfo);
     outputFile << pythonCode;
-    std::cout << "Python class generated in output.py \n";
+
+    std::cout << "\nPython class generated in output.py ✅\n";
     return 0;
 }
