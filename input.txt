@@ -1,0 +1,12 @@
+class Book {
+public:
+    string title;
+    string author;
+    int pages;
+    float rating;
+    bool isAvailable;
+    void checkout();
+    void returnBook();
+    void printDetails();
+    void updateRating();
+};
