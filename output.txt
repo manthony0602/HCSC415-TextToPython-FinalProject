@@ -1,0 +1,25 @@
+# Python
+class Book:
+    def __init__(self):
+        self.title = None
+        self.author = None
+        self.pages = None
+        self.publishYear = None
+
+
+# C++
+class Book {
+public:
+    std::string title;
+    std::string author;
+    std::string pages;
+    std::string publishYear;
+};
+
+# Java
+public class Book {
+    public String title;
+    public String author;
+    public String pages;
+    public String publishYear;
+}

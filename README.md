@@ -1,8 +1,7 @@
-# Text-to-Python Parser Project
+# Multi-Language Class Generator
 
-This project is a **Text-to-Text** system written in C++ that parses a simplified C++ class declaration and converts it into an equivalent Python class. It satisfies the requirements of a domain-specific language (DSL) by defining a clear input grammar, implementing a parser, and generating structured output in a different programming language.
-
----
+This project is a **Text-to-Text** system written in C++ that reads a simple English command describing a class and generates equivalent **Python**, **C++**, and **Java** class code.  
+It satisfies the requirements of a domain-specific language (DSL) by defining a clear input grammar, implementing a parser, and generating structured output in multiple programming languages.
 
 ---
 
@@ -10,44 +9,38 @@ This project is a **Text-to-Text** system written in C++ that parses a simplifie
 
 This final version includes a working parser that:
 
-- Accepts a C++ class declaration in a simplified format
-- Parses class name, attributes, and methods using a recursive parser
-- Generates a valid Python class with constructor and method stubs
-- Outputs the result in a new `.py` file
+- Accepts a simple English command describing a class
+- Parses the class name and attributes from the command
+- Generates valid class boilerplate code in **Python**, **C++**, and **Java**
+- Outputs the result side-by-side in a `.txt` file
 - Built entirely in C++ using standard libraries
-
----
 
 ---
 
 ## **Features**
 
-✔️ Supports simplified C++ syntax with:
+✔️ Supports English input like:
 
-- `class ClassName { ... };`
-- Only `public` members
-- Attributes with types like `int`, `string`, `float`, `bool`
-- Methods declared as `void methodName();`
+- `"Create a class called Student with name and GPA and populate those fields"`
+- `"Create a class called Book with title, author, pages, and publishYear and populate those fields"`
 
-✔️ Outputs Python class with:
+✔️ Outputs:
 
-- `__init__()` constructor initializing attributes
-- Empty method stubs using `def` and `pass`
-- Type-to-default-value mapping logic
+- Python class with an `__init__` constructor
+- C++ class with public string attributes
+- Java class with public string attributes
 
-✔️ Prints success confirmation to the terminal
+✔️ Prints a readable Parse Tree to the terminal
 
----
+✔️ Outputs success confirmation to the terminal
 
 ---
 
 ## **Files Overview**
 
-- **`main.cpp`** – Tokenizer, parser, and Python code generator logic
-- **`input.txt`** – Contains the C++ class declaration to be translated
-- **`output.py`** – Generated Python class based on the parsed input
-
----
+- **`main.cpp`** – Handles input parsing, code generation, and output
+- **`input.txt`** – Contains the English command to be parsed
+- **`output.txt`** – Generated classes in Python, C++, and Java
 
 ---
 
@@ -55,62 +48,49 @@ This final version includes a working parser that:
 
 ### Input (`input.txt`)
 
-```cpp
-class Person {
-public:
-    string name;
-    int age;
-    void greet();
-};
+```text
+Create a class called Book with title, author, pages, and publishYear and populate those fields
 ```
 
-### Output (`output.py`)
+### Output (`output.txt`)
 
-```py
-class Person:
+```text
+# Python
+class Book:
     def __init__(self):
-        self.name = ""
-        self.age = 0
+        self.title = None
+        self.author = None
+        self.pages = None
+        self.publishYear = None
 
-    def greet(self):
-        pass
+# C++
+class Book {
+public:
+    std::string title;
+    std::string author;
+    std::string pages;
+    std::string publishYear;
+};
 
+# Java
+public class Book {
+    public String title;
+    public String author;
+    public String pages;
+    public String publishYear;
+}
 ```
 
 ---
 
----
+## **Grammar Overview**
 
-## **Grammar Definiton (BNF)**
+The input command follows this basic pattern:
 
 ```
-<program> ::= <class_decl>
-<class_decl> ::= "class" <identifier> "{" <public_block> "};"
-<public_block> ::= "public:" <member_list>
-<member_list> ::= <member> | <member> <member_list>
-<member> ::= <attribute_decl> | <method_decl>
-<attribute_decl> ::= <type> <identifier> ";"
-<method_decl> ::= "void" <identifier> "(" ")" ";"
-<type> ::= "int" | "float" | "string" | "double" | "bool"
-<identifier> ::= <letter> <identifier_rest>
-<identifier_rest> ::= "" | <letter_or_digit> <identifier_rest>
+<command> ::= "Create a class called" <ClassName> "with" <AttributeList> "and populate those fields"
+<AttributeList> ::= <Attribute> | <Attribute> "," <AttributeList> | <Attribute> "and" <AttributeList>
 ```
-
----
-
-## How the Grammar Maps to the Parser
-
-Each BNF rule corresponds to a logic section in the C++ parser:
-
-- `<class_decl>` → Recognized by looking for "class" and capturing the name
-- `<public_block>` → Detected with the "public:" keyword
-- `<attribute_decl>` → Parsed by matching types like `int`, `string`, etc., followed by an identifier
-- `<method_decl>` → Detected using the "void" keyword and structured around `void name();`
-- The tokenizer ensures `(`, `)`, and `;` are properly separated to match grammar expectations
-
-These patterns are handled in the `parseClass()` function using a top-down, recursive style.
-
----
 
 ---
 
@@ -118,52 +98,51 @@ These patterns are handled in the `parseClass()` function using a top-down, recu
 
 1. **Compile the Program**:
 
-   ```sh
-   g++ main.cpp -o class_parser
-
+   ```bash
+   g++ main.cpp -o multi_lang_class_generator
    ```
 
 2. **Run the Executable**:
 
    ```bash
-   ./class_parser
+   ./multi_lang_class_generator
    ```
 
 3. **View the Output**:
 
-   - Open `output.py` to see the generated Python class.
+   - Open `output.txt` to see the generated Python, C++, and Java classes.
 
 ---
 
----
+## **Assumptions & Design Decisions**
 
-## **Assumptions & Design Decisions**:
-
-- The program assumes the input class is syntactically correct
-- Only handles basic class structures—no inheritance, private/protected, or complex types
-- Methods must be void with no parameters
-- Types are mapped to Python with default values:
-  `int → 0, bool → False, string → "", etc.`
-
----
+- The input follows the expected format (starts with "Create a class called ... with ... and populate those fields")
+- All attributes are treated as strings for simplicity
+- The generator does not handle methods or complex class structures yet
+- Attributes are initialized to `None` in Python, and declared as `std::string` / `String` in C++/Java
 
 ---
 
 ## **Application Screenshots**:
 
-### 📄 Input File – `input.txt`
+### Input File – `input.txt`
 
 ![Input File](./input_file_view.jpg)  
 This shows the original C++ class declaration written in `input.txt`.
 
 ---
 
-### 🐍 Output File – `output.py`
+### Output File – `output.txt`
 
 ![Translated Python Output](./translated_output_py.jpg)  
-This shows the Python class generated by the parser after translating the input.
+This shows the Python class generated by the parser after translating the input written in `output.txt`.
 
 ---
+
+## Terminal Output (Parse Tree) - `terminal`
+
+![Terminal Parse Tree](./terminal_output.jpg)
+This shows the parse tree that the program uses, as it's shown in the terminal.
 
 ---
 

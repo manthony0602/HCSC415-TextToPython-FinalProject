@@ -3,161 +3,134 @@
 #include <sstream>
 #include <vector>
 #include <string>
-#include <map>
+#include <algorithm>
 
-struct Token {
-    std::string type;
-    std::string value;
-};
-
-// Tokenizer
-std::vector<Token> tokenize(const std::string& input) {
-    std::vector<Token> tokens;
-    std::string buffer;
-
-    auto flushBuffer = [&](const std::string& type = "IDENTIFIER") {
-        if (!buffer.empty()) {
-            tokens.push_back({type, buffer});
-            buffer.clear();
-        }
-    };
-
-    for (size_t i = 0; i < input.size(); ++i) {
-        char ch = input[i];
-
-        if (isspace(ch)) {
-            flushBuffer();
-        }
-        else if (isalpha(ch) || isdigit(ch) || ch == '_') {
-            buffer += ch;
-        }
-        else {
-            flushBuffer();
-
-            if (ch == ';') tokens.push_back({"SEMICOLON", ";"});
-            else if (ch == '{') tokens.push_back({"LBRACE", "{"});
-            else if (ch == '}') tokens.push_back({"RBRACE", "}"});
-            else if (ch == '(') tokens.push_back({"LPAREN", "("});
-            else if (ch == ')') tokens.push_back({"RPAREN", ")"});
-        }
-    }
-    flushBuffer();
-
-    // Assign token types based on value
-    for (auto& token : tokens) {
-        if (token.value == "class") token.type = "CLASS";
-        else if (token.value == "public:") token.type = "PUBLIC";
-        else if (token.value == "void") token.type = "VOID";
-        else if (token.value == "int" || token.value == "float" || token.value == "string" ||
-                 token.value == "double" || token.value == "bool") {
-            token.type = "TYPE";
-        }
-    }
-
-    return tokens;
-}
-
-// Class Info Struct
+// Struct to store the class name and its attributes
 struct ClassInfo {
     std::string name;
-    std::vector<std::pair<std::string, std::string>> attributes;
-    std::vector<std::string> methods;
+    std::vector<std::string> attributes;
 };
 
-// Class Parser
-ClassInfo parseClass(const std::vector<Token>& tokens) {
+// Parses the English input sentence and pulls out the class name and attributes
+ClassInfo parseInput(const std::string& input) {
     ClassInfo info;
-    int i = 0;
 
-    if (tokens[i].type == "CLASS") {
-        info.name = tokens[i + 1].value;
-        i += 3; // skip "class", name, "{"
+    size_t classPos = input.find("class called");
+    if (classPos == std::string::npos) {
+        std::cerr << "Invalid input format (missing 'class called').\n";
+        return info;
     }
 
-    if (tokens[i].type == "PUBLIC") {
-        i++; // skip "public:"
+    size_t withPos = input.find("with", classPos);
+    if (withPos == std::string::npos) {
+        std::cerr << "Invalid input format (missing 'with').\n";
+        return info;
     }
 
-    while (i < tokens.size()) {
-        if (tokens[i].type == "TYPE") {
-            std::string type = tokens[i].value;
-            std::string name = tokens[i + 1].value;
-            info.attributes.push_back({type, name});
-            i += 3; // type, name, ;
+    // Grab the class name
+    size_t classNameStart = classPos + std::string("class called").length() + 1;
+    info.name = input.substr(classNameStart, withPos - classNameStart);
+    info.name.erase(std::remove(info.name.begin(), info.name.end(), ' '), info.name.end());
+
+    // Grab the attributes section
+    size_t fieldsPos = input.find("populate", withPos);
+    std::string attributesSection = input.substr(withPos + 5, fieldsPos - withPos - 5);
+
+    // Split the attributes by spaces and filter out "and" and commas
+    std::istringstream attrStream(attributesSection);
+    std::string word;
+    while (attrStream >> word) {
+        if (word == "and" || word.empty()) continue;
+
+        // Remove any commas stuck to the words
+        if (word.back() == ',') {
+            word.pop_back();
         }
-        else if (tokens[i].type == "VOID") {
-            std::string methodName = tokens[i + 1].value;
-            info.methods.push_back(methodName);
-            i += 5; // void, name, (, ), ;
-        }
-        else {
-            i++;
-        }
+
+        info.attributes.push_back(word);
     }
 
     return info;
 }
 
-// Python Generator
+// Builds the Python class string
 std::string generatePython(const ClassInfo& info) {
     std::ostringstream py;
-
     py << "class " << info.name << ":\n";
     py << "    def __init__(self):\n";
-    if (info.attributes.empty()) {
-        py << "        pass\n";
+    for (const auto& attr : info.attributes) {
+        py << "        self." << attr << " = None\n";
     }
-    for (const auto& [type, name] : info.attributes) {
-        py << "        self." << name << " = ";
-        if (type == "int" || type == "float" || type == "double") py << "0\n";
-        else if (type == "bool") py << "False\n";
-        else py << "\"\"\n";
-    }
-
-    py << "\n";
-    for (const auto& method : info.methods) {
-        py << "    def " << method << "(self):\n";
-        py << "        pass\n\n";
-    }
-
     return py.str();
 }
 
-// Main 
+// Builds the C++ class string
+std::string generateCPP(const ClassInfo& info) {
+    std::ostringstream cpp;
+    cpp << "class " << info.name << " {\npublic:\n";
+    for (const auto& attr : info.attributes) {
+        cpp << "    std::string " << attr << ";\n";
+    }
+    cpp << "};";
+    return cpp.str();
+}
+
+// Builds the Java class string
+std::string generateJava(const ClassInfo& info) {
+    std::ostringstream java;
+    java << "public class " << info.name << " {\n";
+    for (const auto& attr : info.attributes) {
+        java << "    public String " << attr << ";\n";
+    }
+    java << "}";
+    return java.str();
+}
+
 int main() {
+    // Open the input and output files
     std::ifstream inputFile("input.txt");
-    std::ofstream outputFile("output.py");
+    std::ofstream outputFile("output.txt");
 
     if (!inputFile || !outputFile) {
         std::cerr << "Error opening files.\n";
         return 1;
     }
 
-    std::string line, all;
+    // Read the whole input file into a single string
+    std::string line, allInput;
     while (getline(inputFile, line)) {
-        all += line + " ";
+        allInput += line + " ";
     }
 
-    auto tokens = tokenize(all);
-    auto classInfo = parseClass(tokens);
+    auto classInfo = parseInput(allInput);
 
-    // Print Readable Parse Tree
-    std::cout << "[Class]\n";
-    std::cout << "  Name: " << classInfo.name << "\n";
+    if (classInfo.name.empty() || classInfo.attributes.empty()) {
+        std::cerr << "Failed to parse input properly.\n";
+        return 1;
+    }
 
+    // Print the parse tree so we can see what got extracted
+    std::cout << "[Parse Tree]\n";
+    std::cout << "  Class Name: " << classInfo.name << "\n";
     std::cout << "  Attributes:\n";
-    for (const auto& [type, name] : classInfo.attributes) {
-        std::cout << "    - " << type << " " << name << "\n";
+    for (const auto& attr : classInfo.attributes) {
+        std::cout << "    - " << attr << "\n";
     }
+    std::cout << "\n";
 
-    std::cout << "  Methods:\n";
-    for (const auto& method : classInfo.methods) {
-        std::cout << "    - " << method << "\n";
-    }
-
+    // Generate the class code for each language
     std::string pythonCode = generatePython(classInfo);
-    outputFile << pythonCode;
+    std::string cppCode = generateCPP(classInfo);
+    std::string javaCode = generateJava(classInfo);
 
-    std::cout << "\nPython class generated in output.py ✅\n";
+    // Write all the code to the output file
+    outputFile << "# Python\n";
+    outputFile << pythonCode << "\n\n";
+    outputFile << "# C++\n";
+    outputFile << cppCode << "\n\n";
+    outputFile << "# Java\n";
+    outputFile << javaCode << "\n";
+
+    std::cout << "Output generated in output.txt\n";
     return 0;
 }
